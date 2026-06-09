@@ -72,7 +72,7 @@ def _setup_font():
     if chosen:
         plt.rcParams["font.family"] = chosen
     else:
-        fm._load_fontmanager(try_read_cache=False)  # 캐시 갱신
+        fm._load_fontmanager(try_read_cache=False)  
         available = {f.name for f in fm.fontManager.ttflist}
         chosen = next((f for f in candidates if f in available), None)
         if chosen:
@@ -217,11 +217,6 @@ def _build_sensitivity_chart(
     floor_price: float,
     artist: str,
 ) -> str:
-    """가격 민감도 시나리오 분석 차트를 별도 PNG로 생성합니다.
-
-    상단: 시나리오별 순수익 곡선 (price vs net revenue)
-    하단: 시나리오별 최적가 / Revenue Gain 비교 표
-    """
     _setup_font()
     import os
     os.makedirs("results", exist_ok=True)
@@ -238,14 +233,13 @@ def _build_sensitivity_chart(
 
     # ── 상단: 수익 곡선 ────────────────────────────────────────────────────────
     for sc in scenarios:
-        xs  = np.array(sc["price_candidates"]) / 1000   # 천원 단위
-        ys  = np.array(sc["net_revenues"])     / 1e8    # 억원 단위
+        xs = np.array(sc["price_candidates"]) / 1000
+        ys = np.array(sc["net_revenues"]) / 1e8
         ax_top.plot(
             xs, ys,
             label=f"{sc['name']}  ({sc['label']})",
             color=sc["color"], linewidth=2.2,
         )
-        # 최적가 별 표시
         opt_x = sc["optimal_price"] / 1000
         opt_y = sc["optimal_net_revenue"] / 1e8
         ax_top.scatter([opt_x], [opt_y], color=sc["color"], s=90, zorder=5)
@@ -255,17 +249,27 @@ def _build_sensitivity_chart(
             fontsize=7.5, color=sc["color"], va="center",
         )
 
-    # LP 현재 추천가 수직선 (S1 기준 = ceiling 있는 현재 모델)
+    # ── 수직선: label 대신 ax.text로 직접 표시 ────────────────────────────────
+    ymin, ymax = ax_top.get_ylim()
+
     ax_top.axvline(
         lp_base_price / 1000,
         color="#7f8c8d", linestyle="--", linewidth=1.6,
-        label=f"LP recommended (S1 ceiling)  {lp_base_price/1000:.0f}k",
     )
-    # μ_final 기준선
+    ax_top.text(
+        lp_base_price / 1000 + 5, ymax * 0.98,
+        f"LP {lp_base_price/1000:.0f}k",
+        color="#7f8c8d", fontsize=8, va="top",
+    )
+
     ax_top.axvline(
         mu_final / 1000,
         color="#bdc3c7", linestyle=":", linewidth=1.2,
-        label=f"μ_final  {mu_final/1000:.0f}k",
+    )
+    ax_top.text(
+        mu_final / 1000 + 5, ymax * 0.88,
+        f"mu_final {mu_final/1000:.0f}k",
+        color="#bdc3c7", fontsize=8, va="top",
     )
 
     ax_top.set_xlabel("Price (1,000 KRW)", fontsize=10)
@@ -300,12 +304,10 @@ def _build_sensitivity_chart(
     tbl.auto_set_font_size(False)
     tbl.set_fontsize(8.5)
 
-    # 헤더 스타일
     for j in range(len(col_labels)):
         tbl[0, j].set_facecolor("#2c3e50")
         tbl[0, j].set_text_props(color="white", fontweight="bold")
 
-    # S4/S5 행 (브랜드 패널티 있는 시나리오) 배경 강조
     row_colors = ["#eafaf1", "#ebf5fb", "#fef9e7", "#fdebd0", "#fadbd8"]
     for i, color in enumerate(row_colors):
         for j in range(len(col_labels)):
@@ -315,7 +317,6 @@ def _build_sensitivity_chart(
     plt.savefig(_SENSITIVITY_PATH, dpi=150, bbox_inches="tight")
     plt.close(fig)
     return _SENSITIVITY_PATH
-
 
 def _wrap_text(text: str, max_chars: int = 72) -> str:
     """Simple word-wrap for matplotlib text box."""
