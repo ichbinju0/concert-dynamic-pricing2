@@ -400,14 +400,18 @@ with col_out:
 
         # LP 추천가 (D14)
         lp_d14 = lp.get("D14", lp.get("D7", {})).get("price", mu)
+        
         fig_sens.add_vline(
             x=lp_d14 / 1000, line_dash="dash", line_color="#7f8c8d",
-            annotation_text=f"LP 추천 {lp_d14/1000:.0f}k",
+            annotation_text=f"LP {lp_d14/1000:.0f}k",
         )
+
         fig_sens.add_vline(
             x=mu / 1000, line_dash="dot", line_color="#bdc3c7",
-            annotation_text=f"μ_final {mu/1000:.0f}k",
+            annotation_text=f"mu_final {mu/1000:.0f}k",
         )
+
+
         fig_sens.update_layout(
             xaxis_title="가격 (천원)", yaxis_title="순수익 (억원)",
             height=420, legend=dict(orientation="v", x=1.01),
