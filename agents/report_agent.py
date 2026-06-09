@@ -66,16 +66,17 @@ def generate_insight(ci: dict, kpi: dict, lp_prices: dict, wtp: dict) -> str:
 # ── G: 시각화 ─────────────────────────────────────────────────────────────────
 
 def _setup_font():
-    # 한국어 지원 폰트 우선순위로 탐색
-    candidates = ["Malgun Gothic", "NanumGothic", "NanumBarunGothic", "Gulim", "Dotum"]
+    candidates = ["NanumGothic", "NanumBarunGothic", "Malgun Gothic", "Gulim"]
     available  = {f.name for f in fm.fontManager.ttflist}
     chosen     = next((f for f in candidates if f in available), None)
     if chosen:
         plt.rcParams["font.family"] = chosen
     else:
-        # 폰트 없으면 한국어 → 영어로 대체되도록 경고 억제
-        import warnings
-        warnings.filterwarnings("ignore", category=UserWarning, module="matplotlib")
+        fm._load_fontmanager(try_read_cache=False)  # 캐시 갱신
+        available = {f.name for f in fm.fontManager.ttflist}
+        chosen = next((f for f in candidates if f in available), None)
+        if chosen:
+            plt.rcParams["font.family"] = chosen
     plt.rcParams["axes.unicode_minus"] = False
 
 
