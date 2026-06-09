@@ -1,7 +1,7 @@
 {
   "beta_coefficients": {
     "beta_d_day": -12032.39377366426,
-    "beta_W_g": 2.397872330689978e-28,
+    "beta_W_g": 0.0,
     "beta_popularity": 0.0,
     "intercept": 383965.0219364144
   },

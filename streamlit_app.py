@@ -22,7 +22,6 @@ from tools.constraint_calibrator import followers_to_popularity
 
 @st.cache_data
 def _load_data_stats() -> dict | None:
-    """티켓베이 CSV에서 데이터 통계 요약."""
     try:
         df = pd.read_csv(_HERE / "data" / "ticketbay_real.csv")
         price_col = "resale_price" if "resale_price" in df.columns else "listing_price"
@@ -37,6 +36,7 @@ def _load_data_stats() -> dict | None:
         }
     except Exception:
         return None
+
 from tools.simulation import simulate_sensitivity_scenarios
 from main import run_agent
 
@@ -50,29 +50,218 @@ st.set_page_config(
 # ── Custom CSS ────────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
-[data-testid="metric-container"] {
-    background: #f8f9fa;
-    border: 1px solid #e9ecef;
-    border-radius: 10px;
-    padding: 12px 16px;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+/* ── Hide hamburger menu & footer, keep header (loading spinner lives there) ── */
+#MainMenu { visibility: hidden; }
+footer    { visibility: hidden; }
+[data-testid="stToolbar"] { visibility: hidden; }
+
+/* ── Global ── */
+html, body, [class*="css"] {
+    font-family: 'Inter', sans-serif;
 }
+
+/* ── Dark background ── */
+.stApp {
+    background: #0a0a0f;
+    color: #f0eaf8;
+}
+
+/* ── Sidebar ── */
+[data-testid="stSidebar"] {
+    background: #100d1a !important;
+    border-right: 1px solid #1f1535;
+}
+[data-testid="stSidebar"] * {
+    color: #d4c8f0 !important;
+}
+
+/* ── Hero ── */
+.hero-title {
+    font-size: 2.6rem;
+    font-weight: 800;
+    background: linear-gradient(90deg, #a855f7, #ec4899, #f97316);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -1px;
+    line-height: 1.15;
+    margin-bottom: 6px;
+}
+.hero-caption {
+    color: #7c6fa0;
+    font-size: 0.88rem;
+    margin-bottom: 28px;
+    letter-spacing: 0.01em;
+}
+
+/* ── Metric cards ── */
+[data-testid="metric-container"] {
+    background: #13101f !important;
+    border: 1px solid #231840 !important;
+    border-radius: 14px !important;
+    padding: 18px 20px !important;
+}
+[data-testid="metric-container"] label {
+    color: #7c6fa0 !important;
+    font-size: 0.72rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.08em !important;
+    font-weight: 600 !important;
+}
+[data-testid="metric-container"] [data-testid="stMetricValue"] {
+    color: #f0eaf8 !important;
+    font-size: 1.8rem !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.5px !important;
+}
+[data-testid="metric-container"] [data-testid="stMetricDelta"] {
+    font-size: 0.78rem !important;
+}
+
+/* ── Tabs ── */
+[data-testid="stTabs"] [role="tablist"] {
+    border-bottom: 1px solid #1f1535 !important;
+    gap: 4px !important;
+}
+[data-testid="stTabs"] [role="tab"] {
+    color: #7c6fa0 !important;
+    font-size: 0.82rem !important;
+    font-weight: 500 !important;
+    padding: 8px 16px !important;
+    border-radius: 8px 8px 0 0 !important;
+    transition: color 0.15s !important;
+}
+[data-testid="stTabs"] [role="tab"]:hover {
+    color: #c084fc !important;
+}
+[data-testid="stTabs"] [role="tab"][aria-selected="true"] {
+    color: #c084fc !important;
+    border-bottom: 2px solid #a855f7 !important;
+    background: rgba(168, 85, 247, 0.06) !important;
+}
+
+/* ── Buttons ── */
+.stButton > button {
+    background: linear-gradient(135deg, #7c3aed 0%, #db2777 100%) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 12px !important;
+    font-weight: 700 !important;
+    font-size: 0.88rem !important;
+    padding: 12px 22px !important;
+    letter-spacing: 0.02em !important;
+    transition: opacity 0.2s, transform 0.15s !important;
+}
+.stButton > button:hover {
+    opacity: 0.85 !important;
+    transform: translateY(-1px) !important;
+}
+.stButton > button:disabled {
+    background: #1f1535 !important;
+    color: #3d3060 !important;
+}
+
+/* ── Inputs ── */
+.stTextInput > div > div > input,
+.stNumberInput > div > div > input {
+    background: #13101f !important;
+    border: 1px solid #231840 !important;
+    border-radius: 10px !important;
+    color: #f0eaf8 !important;
+    font-size: 0.9rem !important;
+    padding: 10px 14px !important;
+}
+.stSelectbox > div > div {
+    background: #13101f !important;
+    border: 1px solid #231840 !important;
+    border-radius: 10px !important;
+    color: #f0eaf8 !important;
+}
+
+/* ── Divider ── */
+hr {
+    border-color: #1f1535 !important;
+    margin: 16px 0 !important;
+}
+
+/* ── Alert boxes ── */
+[data-testid="stAlert"] {
+    border-radius: 12px !important;
+    border: none !important;
+    font-size: 0.88rem !important;
+}
+
+/* ── Insight box ── */
 .insight-box {
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-    border-left: 4px solid #667eea;
-    border-radius: 8px;
-    padding: 16px 20px;
-    margin: 8px 0;
+    background: #13101f;
+    border-left: 3px solid #a855f7;
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin: 10px 0;
     font-size: 0.9rem;
-    line-height: 1.7;
-    color: #111111 !important;
+    line-height: 1.85;
+    color: #d4c8f0 !important;
+}
+
+/* ── Section label ── */
+.section-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: #a855f7;
+    margin-bottom: 10px;
+    margin-top: 4px;
+}
+
+/* ── Dataframe ── */
+[data-testid="stDataFrame"] {
+    border-radius: 12px !important;
+    overflow: hidden !important;
+    font-size: 0.9rem !important;
+}
+
+/* ── Expander ── */
+[data-testid="stExpander"] {
+    background: #13101f !important;
+    border: 1px solid #231840 !important;
+    border-radius: 12px !important;
+}
+
+/* ── Download button ── */
+[data-testid="stDownloadButton"] > button {
+    background: #13101f !important;
+    border: 1px solid #7c3aed !important;
+    color: #a855f7 !important;
+    border-radius: 10px !important;
+    font-size: 0.84rem !important;
+    font-weight: 600 !important;
+}
+
+/* ── Status box ── */
+[data-testid="stStatusWidget"] {
+    background: #13101f !important;
+    border: 1px solid #231840 !important;
+    border-radius: 12px !important;
+}
+
+/* ── Spinner ── */
+.stSpinner > div {
+    border-top-color: #a855f7 !important;
 }
 </style>
 """, unsafe_allow_html=True)
 
-st.title("🎵 K-pop Concert Dynamic Pricing Agent")
-st.caption(
-    "티켓베이 실거래 데이터 기반 WTP 회귀 → LP 최적화 → 동적 가격 책정  ·  "
-    "Claude AI 좌석 분석 + KOPIS 실시간 연동"
+# ── Hero header ───────────────────────────────────────────────────────────────
+st.markdown('<div class="hero-title">K-pop Concert Dynamic Pricing</div>', unsafe_allow_html=True)
+st.markdown(
+    '<div class="hero-caption">'
+    'Ticketbay resale data &nbsp;·&nbsp; WTP regression &rarr; LP optimization &rarr; dynamic pricing &nbsp;·&nbsp; '
+    'Claude AI seat analysis + KOPIS live integration'
+    '</div>',
+    unsafe_allow_html=True,
 )
 
 # ── Session state ─────────────────────────────────────────────────────────────
@@ -82,35 +271,35 @@ for _k, _v in [("concerts", []), ("result", None), ("searched_artist", "")]:
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
-    st.header("🎤 아티스트 입력")
-    artist    = st.text_input("아티스트명", placeholder="예: aespa, DAY6, IU")
+    st.markdown('<div class="section-label">Artist Setup</div>', unsafe_allow_html=True)
+    artist    = st.text_input("Artist Name", placeholder="e.g. aespa, DAY6, IU")
     followers = st.number_input(
-        "Instagram 팔로워 (만명)", min_value=0.1, max_value=10000.0,
-        value=150.0, step=1.0, help="150만명 → 150 입력",
+        "Instagram Followers (10k units)", min_value=0.1, max_value=10000.0,
+        value=150.0, step=1.0, help="e.g. 1.5M followers → enter 150",
     )
     if followers:
         pop = followers_to_popularity(followers)
-        label = {7:"🔥 메가", 6:"⭐ 톱", 5:"✨ 인기", 4:"🎵 중견",
-                 3:"🎶 신진", 2:"🌱 성장", 1:"🌱 인디"}.get(pop, "")
-        st.metric("인기도 점수", f"{pop} / 7", label)
+        label = {7:"Mega", 6:"Top", 5:"Popular", 4:"Mid-tier",
+                 3:"Rising", 2:"Growing", 1:"Indie"}.get(pop, "")
+        st.metric("Popularity Score", f"{pop} / 7", label)
 
     st.divider()
-    if st.button("🔍 KOPIS 공연 검색", type="primary",
+    if st.button("Search KOPIS", type="primary",
                  use_container_width=True, disabled=not artist):
-        with st.spinner(f"'{artist}' 검색 중..."):
-            st.session_state.concerts       = list_concerts(artist)
+        with st.spinner(f"Searching '{artist}'..."):
+            st.session_state.concerts        = list_concerts(artist)
             st.session_state.searched_artist = artist
             st.session_state.result          = None
 
     st.divider()
-    st.caption("IE209 생산운영관리 팀 프로젝트")
+    st.caption("IE209 Operations Management · Team Project")
 
 # ── Main layout ───────────────────────────────────────────────────────────────
 col_in, col_out = st.columns([1, 2], gap="large")
 
-# ── 입력 패널 ─────────────────────────────────────────────────────────────────
+# ── Input panel ───────────────────────────────────────────────────────────────
 with col_in:
-    st.subheader("📋 공연 정보")
+    st.markdown('<div class="section-label">Concert Info</div>', unsafe_allow_html=True)
 
     concert_index = None
     extra         = {}
@@ -118,32 +307,32 @@ with col_in:
     concerts      = st.session_state.concerts
 
     if concerts:
-        st.success(f"{len(concerts)}개 공연 발견")
-        opts = ["자동 선택 (가장 가까운 공연)"] + [
+        st.success(f"{len(concerts)} concert(s) found")
+        opts = ["Auto-select (nearest upcoming)"] + [
             f"[{c['index']}]  {c['date']}  |  {c['name']}  @  {c['venue']}"
             for c in concerts
         ]
-        chosen = st.selectbox("공연 선택", opts)
+        chosen = st.selectbox("Select Concert", opts)
         if chosen != opts[0]:
             concert_index = int(chosen.split("]")[0].replace("[", "").strip())
 
     elif st.session_state.searched_artist:
-        st.warning("KOPIS 결과 없음 → 수동 입력")
+        st.warning("No KOPIS results — manual input mode")
         manual_mode = True
-        venue  = st.text_input("공연장명", placeholder="예: 올림픽체조경기장")
-        d_day  = st.number_input("공연까지 남은 일수", 1, 365, 60)
-        n_seat = st.number_input("총 좌석 수", 100, 200000, 10000, 500)
+        venue  = st.text_input("Venue Name", placeholder="e.g. Olympic Gymnastics Arena")
+        d_day  = st.number_input("Days Until Concert", 1, 365, 60)
+        n_seat = st.number_input("Total Seats", 100, 200000, 10000, 500)
         extra  = {
             "skip_kopis": True, "venue": venue,
             "sale_start_d_day": int(d_day), "total_seats": int(n_seat),
         }
     else:
-        st.info("사이드바에서 아티스트명을 입력하고 KOPIS 검색을 눌러주세요.")
+        st.info("Enter an artist name in the sidebar and click Search KOPIS.")
 
     st.divider()
-    st.subheader("🗺️ 좌석배치도 (선택)")
+    st.markdown('<div class="section-label">Seat Map — Optional</div>', unsafe_allow_html=True)
     uploaded = st.file_uploader(
-        "Claude Vision이 구역별 Z1/Z2/Z3 자동 분석",
+        "Claude Vision auto-assigns Z1/Z2/Z3 zone weights",
         type=["png", "jpg", "jpeg", "webp"],
     )
     img_path = None
@@ -152,11 +341,11 @@ with col_in:
         img_path = str(_HERE / "data" / uploaded.name)
         with open(img_path, "wb") as f:
             f.write(uploaded.read())
-        st.image(img_path, caption="업로드된 좌석배치도", use_column_width=True)
+        st.image(img_path, caption="Uploaded seat map", use_column_width=True)
 
     st.divider()
     disabled = not artist or not followers or (not concerts and not manual_mode)
-    if st.button("🚀 가격 최적화 실행", type="primary",
+    if st.button("Run Pricing Optimization", type="primary",
                  use_container_width=True, disabled=disabled):
         inp = {"artist": artist, "followers_in_10k": followers,
                "concert_index": concert_index, **extra}
@@ -164,23 +353,23 @@ with col_in:
             inp["venue_image_path"] = img_path
 
         with col_out:
-            with st.status("AI 에이전트 실행 중...", expanded=True) as status:
-                st.write("① 콘서트 정보 확인 + KOPIS 조회")
-                st.write("② Claude API 좌석 헤도닉 변수 할당")
-                st.write("③ WTP 회귀 분석 → floor/ceiling 도출")
-                st.write("④ LP 최적화 (D60/D30/D14/D7/D1)")
-                st.write("⑤ 3전략 시뮬레이션 + 민감도 분석 + 시각화")
+            with st.status("Running AI agent...", expanded=True) as status:
+                st.write("① Concert info verification + KOPIS lookup")
+                st.write("② Claude API hedonic seat variable assignment")
+                st.write("③ WTP regression → deriving floor / ceiling")
+                st.write("④ LP optimization (D60 / D30 / D14 / D7 / D1)")
+                st.write("⑤ 3-strategy simulation + sensitivity analysis + charts")
                 try:
                     st.session_state.result = run_agent(inp)
-                    status.update(label="✅ 완료!", state="complete")
+                    status.update(label="Done!", state="complete")
                 except Exception as e:
-                    status.update(label=f"❌ 오류: {e}", state="error")
+                    status.update(label=f"Error: {e}", state="error")
                     st.error(str(e))
 
-# ── 결과 패널 ─────────────────────────────────────────────────────────────────
+# ── Results panel ─────────────────────────────────────────────────────────────
 with col_out:
     if not st.session_state.result:
-        st.info("실행 결과가 여기에 표시됩니다.")
+        st.info("Results will appear here after running the optimization.")
         st.stop()
 
     res  = st.session_state.result
@@ -198,57 +387,62 @@ with col_out:
     sigma       = float(wtp.get("sigma",      45000))
     b1m         = float(wtp.get("beta1_over_mu", -0.003))
 
-    # ── KPI 메트릭 ────────────────────────────────────────────────────────────
-    st.subheader("📊 핵심 KPI")
+    def _krw(won: float) -> str:
+        """Format KRW in 만원."""
+        man = won / 10000
+        return f"{man:.1f}만원" if man < 100 else f"{man:,.0f}만원"
+
+    # ── KPI metrics ───────────────────────────────────────────────────────────
+    st.markdown('<div class="section-label">Key Performance Indicators</div>', unsafe_allow_html=True)
     m1, m2, m3, m4 = st.columns(4)
-    m1.metric("Revenue Gain",     f"+{kpi.get('revenue_gain_pct', 0):.1f}%", "동적 vs 고정가")
-    m2.metric("MAPE",              f"{kpi.get('mape', 0):.3f}")
-    m3.metric("Floor (하한)",  f"{floor_p/10000:.1f}만원")
-    m4.metric("Ceiling (상한)", f"{ceiling_p/10000:.1f}만원")
+    m1.metric("Revenue Gain",    f"+{kpi.get('revenue_gain_pct', 0):.1f}%", "Dynamic vs Fixed")
+    m2.metric("MAPE",             f"{kpi.get('mape', 0):.3f}")
+    m3.metric("Price Floor",      _krw(floor_p))
+    m4.metric("Price Ceiling",    _krw(ceiling_p))
 
     w1, w2, w3 = st.columns(3)
-    w1.metric("μ_final (WTP 평균)", f"{mu/10000:.1f}만원")
-    w2.metric("σ (표준편차)",        f"{sigma/10000:.1f}만원")
-    w3.metric("LOGO MAPE",          f"{wtp.get('logo_mape', 0):.3f}")
+    w1.metric("WTP Mean (mu_final)", _krw(mu))
+    w2.metric("Std Dev (sigma)",      _krw(sigma))
+    w3.metric("LOGO MAPE",            f"{wtp.get('logo_mape', 0):.3f}")
 
-    # 데이터 통계
+    # Data stats
     stats = _load_data_stats()
     if stats:
-        with st.expander("📂 학습 데이터 통계 (티켓베이 크롤링)", expanded=False):
+        with st.expander("Training Data Stats (Ticketbay crawl)", expanded=False):
             d1, d2, d3, d4, d5 = st.columns(5)
-            d1.metric("총 관측치",    f"{stats['n_rows']:,}건")
-            d2.metric("공연 수",      f"{stats['n_concerts']}개")
-            d3.metric("최저 재판매가", f"{stats['price_min']//10000}만원")
-            d4.metric("최고 재판매가", f"{stats['price_max']//10000}만원")
-            d5.metric("D-day 범위",   f"D-{stats['d_day_range']}")
+            d1.metric("Total Records",  f"{stats['n_rows']:,}")
+            d2.metric("Concerts",       f"{stats['n_concerts']}")
+            d3.metric("Min Resale",     _krw(stats['price_min']))
+            d4.metric("Max Resale",     _krw(stats['price_max']))
+            d5.metric("D-day Range",    f"D-{stats['d_day_range']}")
 
     st.divider()
 
-    # ── 탭 ────────────────────────────────────────────────────────────────────
+    # ── Tabs ──────────────────────────────────────────────────────────────────
     tab_price, tab_revenue, tab_strat, tab_sens, tab_whatif, tab_insight, tab_model = st.tabs([
-        "🎫 가격표",
-        "💰 수익 분석",
-        "📈 3전략 비교",
-        "📉 민감도 시나리오",
-        "🎚️ What-if 시뮬레이터",
-        "🤖 AI 해설",
-        "📐 모델 수식",
+        "Pricing Table",
+        "Revenue Analysis",
+        "Strategy Comparison",
+        "Sensitivity Scenarios",
+        "What-if Simulator",
+        "AI Insight",
+        "Model Equations",
     ])
 
-    # ── Tab 1: 가격표 ─────────────────────────────────────────────────────────
+    # ── Tab 1: Pricing Table ──────────────────────────────────────────────────
     with tab_price:
         rev3_total = kpi.get("revenue_strategy3", 0)
         gain_pct   = kpi.get("revenue_gain_pct", 0)
 
-        st.subheader("총 예상 수익")
+        st.markdown('<div class="section-label">Projected Revenue</div>', unsafe_allow_html=True)
         rc1, rc2 = st.columns(2)
         rc1.metric(
-            "동적 가격 (D-0까지 전석 판매 시)",
+            "Dynamic Pricing (full sellout by D-0)",
             f"{rev3_total / 1e8:.1f}억원",
-            delta=f"고정가 대비 +{gain_pct:.1f}%",
+            delta=f"+{gain_pct:.1f}% vs fixed price",
         )
         rc2.metric(
-            "고정가 기준 예상 수익",
+            "Fixed Price Baseline",
             f"{kpi.get('revenue_strategy1', 0) / 1e8:.1f}억원",
         )
 
@@ -256,126 +450,126 @@ with col_out:
         report_png = _HERE / "results" / "report.png"
         if report_png.exists():
             st.download_button(
-                "⬇️ 분석 차트 PNG 다운로드",
+                "Download Analysis Chart (PNG)",
                 data=report_png.read_bytes(),
                 file_name=f"{ci.get('artist', 'pricing')}_report.png",
                 mime="image/png",
             )
 
-    # ── Tab 2: 수익 분석 ─────────────────────────────────────────────────────
+    # ── Tab 2: Revenue Analysis ───────────────────────────────────────────────
     with tab_revenue:
-        st.subheader("총 예상 수익 분석")
-        st.caption("D-0까지 전석 판매 완료 시 기준 · Joint LP 동적 가격 적용 결과")
+        st.markdown('<div class="section-label">Revenue Breakdown</div>', unsafe_allow_html=True)
+        st.caption("Assumes full sellout by D-0 · Joint LP dynamic pricing applied")
 
         rev1 = kpi.get("revenue_strategy1", 0)
         rev2 = kpi.get("revenue_strategy2", 0)
         rev3 = kpi.get("revenue_strategy3", 0)
         gain = kpi.get("revenue_gain_pct", 0)
 
-        # 핵심 수치 강조
         m1, m2, m3 = st.columns(3)
-        m1.metric("고정가 (S1)", f"{rev1/1e8:.2f}억원", help="mu_final 고정가로 전 구간 판매 시")
-        m2.metric("최적 고정가 (S2)", f"{rev2/1e8:.2f}억원", help="단일 최적가 적용 시")
-        m3.metric("동적 가격 (S3)", f"{rev3/1e8:.2f}억원",
-                  delta=f"+{gain:.1f}% vs 고정가",
-                  delta_color="normal")
+        m1.metric("S1 Fixed Price",    f"{rev1/1e8:.2f}억원", help="Fixed at mu_final across all intervals")
+        m2.metric("S2 Optimal Static", f"{rev2/1e8:.2f}억원", help="Single optimal price applied")
+        m3.metric("S3 Dynamic LP",     f"{rev3/1e8:.2f}억원",
+                  delta=f"+{gain:.1f}% vs fixed", delta_color="normal")
 
         st.divider()
 
-        # 바 차트
         fig_rev = go.Figure(data=[
             go.Bar(
-                x=["S1  고정가\n(mu_final)", "S2  최적 고정가", "S3  동적 LP\n(Joint 최적화)"],
+                x=["S1  Fixed\n(mu_final)", "S2  Optimal Static", "S3  Dynamic LP\n(Joint Opt.)"],
                 y=[rev1/1e8, rev2/1e8, rev3/1e8],
-                marker_color=["#a8d8ea", "#f8b195", "#f67280"],
-                text=[f"{rev1/1e8:.2f}억", f"{rev2/1e8:.2f}억", f"{rev3/1e8:.2f}억"],
+                marker_color=["#7c3aed", "#db2777", "#f97316"],
+                text=[f"{rev1/1e8:.2f}억원", f"{rev2/1e8:.2f}억원", f"{rev3/1e8:.2f}억원"],
                 textposition="outside",
-                textfont=dict(size=14, color="white"),
+                textfont=dict(size=14, color="#f0eaf8"),
             )
         ])
         fig_rev.update_layout(
             title=dict(
-                text=f"동적 가격 적용 시 고정가 대비 <b>+{gain:.1f}%</b> 수익 증가",
-                font=dict(size=16),
+                text=f"Dynamic pricing yields <b>+{gain:.1f}%</b> over fixed price",
+                font=dict(size=15, color="#f0eaf8"),
             ),
-            yaxis_title="총 수익 (억원)",
+            yaxis_title="Total Revenue (억원)",
             showlegend=False,
             height=420,
-            plot_bgcolor="rgba(0,0,0,0)",
-            paper_bgcolor="rgba(0,0,0,0)",
-            font=dict(color="white"),
+            plot_bgcolor="#0a0a0f",
+            paper_bgcolor="#0a0a0f",
+            font=dict(color="#7c6fa0", size=13),
+            yaxis=dict(gridcolor="#1f1535"),
+            xaxis=dict(gridcolor="#1f1535"),
         )
         st.plotly_chart(fig_rev, use_container_width=True)
 
         st.info(
-            f"**해석:** 동적 가격 책정(S3)을 적용하면 고정가(S1) 대비 "
-            f"**{rev3/1e8 - rev1/1e8:.2f}억원 추가 수익** 발생 "
-            f"(+{gain:.1f}%). D-0까지 전 구간 티켓 판매 기준."
+            f"**Interpretation:** Dynamic pricing (S3) generates an additional "
+            f"**{rev3/1e8 - rev1/1e8:.2f}억원 additional revenue** over the fixed baseline (S1) "
+            f"(+{gain:.1f}%), assuming full sellout across all D-day intervals."
         )
 
-    # ── Tab 3: 3전략 비교 (Plotly) ────────────────────────────────────────────
+    # ── Tab 3: Strategy Comparison ────────────────────────────────────────────
     with tab_strat:
         _IV_ALL    = ["D60", "D30", "D14", "D7", "D1"]
         _DDAYS     = {"D60": 60, "D30": 30, "D14": 14, "D7": 7, "D1": 1}
-        _INTERVALS = [iv for iv in _IV_ALL if iv in lp]  # 실제 존재하는 구간만
+        _INTERVALS = [iv for iv in _IV_ALL if iv in lp]
 
         def _d_factor(d_day: int) -> float:
             return max(0.5, min(1.0 + b1m * (14 - d_day), 1.5))
 
-        def _demand(price: float, d_day: int) -> float:
-            mu_adj = mu * _d_factor(d_day)
-            return total_seats * (1 - norm.cdf(price, mu_adj, sigma))
-
-        st.subheader("전략별 총수익 비교")
-        st.caption("S3 Dynamic LP는 전 구간 가격을 동시에 최적화(Joint LP)하여 총수익을 극대화합니다.")
+        st.markdown('<div class="section-label">Total Revenue by Strategy</div>', unsafe_allow_html=True)
+        st.caption("S3 Dynamic LP jointly optimizes prices across all intervals to maximize total revenue.")
 
         rev1 = kpi.get("revenue_strategy1", 0)
         rev2 = kpi.get("revenue_strategy2", 0)
         rev3 = kpi.get("revenue_strategy3", 0)
 
         fig_bar = go.Figure(data=[
-            go.Bar(name="S1 Fixed",        x=["Fixed"],   y=[rev1/1e8],
-                   marker_color="#a8d8ea", text=[f"{rev1/1e8:.2f}억"], textposition="outside"),
+            go.Bar(name="S1 Fixed",          x=["Fixed"],   y=[rev1/1e8],
+                   marker_color="#7c3aed", text=[f"{rev1/1e8:.2f}억원"], textposition="outside"),
             go.Bar(name="S2 Optimal Static", x=["Static"],  y=[rev2/1e8],
-                   marker_color="#f8b195", text=[f"{rev2/1e8:.2f}억"], textposition="outside"),
-            go.Bar(name="S3 Dynamic LP",   x=["Dynamic"], y=[rev3/1e8],
-                   marker_color="#f67280", text=[f"{rev3/1e8:.2f}억"], textposition="outside"),
+                   marker_color="#db2777", text=[f"{rev2/1e8:.2f}억원"], textposition="outside"),
+            go.Bar(name="S3 Dynamic LP",     x=["Dynamic"], y=[rev3/1e8],
+                   marker_color="#f97316", text=[f"{rev3/1e8:.2f}억원"], textposition="outside"),
         ])
         fig_bar.update_layout(
-            title=f"총 수익 비교  (Dynamic Gain: +{kpi.get('revenue_gain_pct',0):.1f}%)",
-            yaxis_title="총 수익 (억원)", showlegend=True, height=350,
+            title=f"Revenue Comparison  (Dynamic Gain: +{kpi.get('revenue_gain_pct',0):.1f}%)",
+            yaxis_title="Total Revenue (억원)", showlegend=True, height=350,
+            plot_bgcolor="#0a0a0f", paper_bgcolor="#0a0a0f",
+            font=dict(color="#7c6fa0", size=13),
+            yaxis=dict(gridcolor="#1f1535"),
         )
         st.plotly_chart(fig_bar, use_container_width=True)
 
-        st.subheader("D-day별 가격 궤적")
+        st.markdown('<div class="section-label">Price Trajectory by D-day</div>', unsafe_allow_html=True)
         fig_line = go.Figure()
-        strategy_colors = {"Fixed": "#a8d8ea", "Static": "#f8b195", "Dynamic": "#f67280"}
         for s_name, s_data, s_color in [
-            ("Fixed",   {iv: lp[iv] for iv in _INTERVALS if iv in lp}, "#a8d8ea"),
-            ("Dynamic", lp, "#f67280"),
+            ("Fixed",   {iv: lp[iv] for iv in _INTERVALS if iv in lp}, "#7c3aed"),
+            ("Dynamic", lp, "#f97316"),
         ]:
             ys = [s_data[iv]["price"] / 1000 for iv in _INTERVALS if iv in s_data]
             xs = [iv for iv in _INTERVALS if iv in s_data]
             fig_line.add_trace(go.Scatter(
                 x=xs, y=ys, mode="lines+markers", name=s_name,
-                line=dict(color=s_color, width=2.5), marker=dict(size=8),
+                line=dict(color=s_color, width=2.5), marker=dict(size=9),
                 hovertemplate="%{x}: %{y:.0f}k KRW<extra></extra>",
             ))
-        # μ_final 기준선
-        fig_line.add_hline(y=mu/1000, line_dash="dot", line_color="#95a5a6",
-                           annotation_text=f"μ_final {mu/1000:.0f}k")
+        fig_line.add_hline(y=mu/1000, line_dash="dot", line_color="#5a4f72",
+                           annotation_text=f"mu_final {mu/1000:.0f}k",
+                           annotation_font_color="#7c6fa0")
         fig_line.update_layout(
-            yaxis_title="가격 (천원)", height=350,
+            yaxis_title="Price (1,000 KRW)", height=350,
             xaxis=dict(categoryorder="array", categoryarray=_INTERVALS),
+            plot_bgcolor="#0a0a0f", paper_bgcolor="#0a0a0f",
+            font=dict(color="#7c6fa0", size=13),
+            yaxis=dict(gridcolor="#1f1535"),
         )
         st.plotly_chart(fig_line, use_container_width=True)
 
-    # ── Tab 3: 민감도 시나리오 (Plotly) ──────────────────────────────────────
+    # ── Tab 4: Sensitivity Scenarios ──────────────────────────────────────────
     with tab_sens:
-        st.subheader("가격 민감도 시나리오 분석")
-        st.caption("D-14 기준 · ceiling 제거 → 이탈이 자연 천장 역할")
+        st.markdown('<div class="section-label">Price Sensitivity Analysis</div>', unsafe_allow_html=True)
+        st.caption("D-14 basis · no ceiling — churn acts as the natural price ceiling")
 
-        with st.spinner("시나리오 계산 중..."):
+        with st.spinner("Computing scenarios..."):
             scenarios = simulate_sensitivity_scenarios(
                 wtp_model=wtp, total_seats=total_seats,
                 floor_price=floor_p, d_day=14,
@@ -388,55 +582,53 @@ with col_out:
             fig_sens.add_trace(go.Scatter(
                 x=xs, y=ys, mode="lines", name=sc["name"],
                 line=dict(color=sc["color"], width=2.2),
-                hovertemplate="가격: %{x:.0f}k원<br>순수익: %{y:.2f}억원<extra></extra>",
+                hovertemplate="Price: %{x:.0f}k KRW<br>Net Revenue: %{y:.2f}억<extra></extra>",
             ))
             fig_sens.add_trace(go.Scatter(
                 x=[sc["optimal_price"] / 1000],
                 y=[sc["optimal_net_revenue"] / 1e8],
                 mode="markers", showlegend=False,
-                marker=dict(color=sc["color"], size=11, symbol="star"),
-                hovertemplate=f"{sc['name']}<br>최적가: %{{x:.0f}}k<extra></extra>",
+                marker=dict(color=sc["color"], size=12, symbol="star"),
+                hovertemplate=f"{sc['name']}<br>Optimal: %{{x:.0f}}k<extra></extra>",
             ))
 
-        # LP 추천가 (D14)
         lp_d14 = lp.get("D14", lp.get("D7", {})).get("price", mu)
-        
         fig_sens.add_vline(
-            x=lp_d14 / 1000, line_dash="dash", line_color="#7f8c8d",
+            x=lp_d14 / 1000, line_dash="dash", line_color="#5a4f72",
             annotation_text=f"LP {lp_d14/1000:.0f}k",
             annotation_position="top right",
         )
-
         fig_sens.add_vline(
-            x=mu / 1000, line_dash="dot", line_color="#bdc3c7",
+            x=mu / 1000, line_dash="dot", line_color="#3d3060",
             annotation_text=f"mu_final {mu/1000:.0f}k",
             annotation_position="bottom right",
         )
-
-
         fig_sens.update_layout(
-            xaxis_title="가격 (천원)", yaxis_title="순수익 (억원)",
-            height=420, legend=dict(orientation="v", x=1.01),
+            xaxis_title="Price (1,000 KRW)", yaxis_title="Net Revenue (억원)",
+            height=440, legend=dict(orientation="v", x=1.01),
+            plot_bgcolor="#0a0a0f", paper_bgcolor="#0a0a0f",
+            font=dict(color="#7c6fa0", size=13),
+            yaxis=dict(gridcolor="#1f1535"),
+            xaxis=dict(gridcolor="#1f1535"),
         )
         st.plotly_chart(fig_sens, use_container_width=True)
 
-        # 시나리오 요약 표
         tbl_data = []
         for sc in scenarios:
             gain = sc["revenue_gain_vs_s1_pct"]
             tbl_data.append({
-                "시나리오":     sc["name"],
-                "가정":         sc["label"],
-                "최적가":       f"{sc['optimal_price']/1000:,.0f}k원",
-                "순수익 (억)":  f"{sc['optimal_net_revenue']/1e8:.2f}",
-                "vs S1":        f"{'▲' if gain >= 0 else '▼'} {abs(gain):.1f}%",
+                "Scenario":         sc["name"],
+                "Assumption":       sc["label"],
+                "Optimal Price":    f"{sc['optimal_price']/1000:,.0f}k KRW",
+                "Net Revenue (억)":  f"{sc['optimal_net_revenue']/1e8:.2f}",
+                "vs S1":            f"{'▲' if gain >= 0 else '▼'} {abs(gain):.1f}%",
             })
         df_tbl = pd.DataFrame(tbl_data)
 
         def _color_gain(val):
             if "▼" in str(val):
-                return "color: #c0392b; font-weight: bold"
-            return "color: #1a7a3c; font-weight: bold"
+                return "color: #f87171; font-weight: bold"
+            return "color: #4ade80; font-weight: bold"
 
         st.dataframe(
             df_tbl.style.map(_color_gain, subset=["vs S1"]),
@@ -444,31 +636,33 @@ with col_out:
         )
 
         st.info(
-            "**해석 가이드**  \n"
-            "★점 = 해당 시나리오의 순수익 최대 가격  |  "
-            "LP 추천가(점선)가 S4/S5 ★보다 **오른쪽** = 현실에서 손해  \n"
-            "S4·S5는 구매포기 + 브랜드 이미지 훼손 패널티 포함"
+            "**Guide** — "
+            "Star = optimal price for each scenario.  "
+            "If LP recommended (dashed line) sits **right of** S4/S5 star → real-world loss.  "
+            "S4 & S5 include churn + brand reputation penalty."
         )
 
         sens_png = _HERE / "results" / "sensitivity_report.png"
         if sens_png.exists():
             st.download_button(
-                "⬇️ 시나리오 차트 PNG 다운로드",
+                "Download Scenario Chart (PNG)",
                 data=sens_png.read_bytes(),
                 file_name=f"{ci.get('artist','pricing')}_sensitivity.png",
                 mime="image/png",
             )
 
-    # ── Tab 4: D-day별 가격 ───────────────────────────────────────────────────
+    # ── Tab 5: What-if Simulator ──────────────────────────────────────────────
     with tab_whatif:
-        st.subheader("D-day별 좌석 가격 및 판매 현황")
-        st.caption("구간을 선택하면 해당 시점의 잔여 좌석·예상 판매량·좌석별 티켓 가격을 확인합니다.")
+        st.markdown('<div class="section-label">D-day Pricing Snapshot</div>', unsafe_allow_html=True)
+        st.caption("Select a D-day interval to inspect remaining seats, expected sales, and zone prices.")
 
         _dday_opts = [iv for iv in ["D60", "D30", "D14", "D7", "D1"] if iv in lp]
-        selected   = st.selectbox("D-day 구간 선택", _dday_opts,
-                                  index=min(2, len(_dday_opts) - 1))
+        selected   = st.selectbox(
+            "Select D-day Interval", _dday_opts,
+            index=min(2, len(_dday_opts) - 1),
+            key="whatif_dday_select",
+        )
 
-        # 잔여 좌석 누적 계산 (D60 → 선택 구간 직전까지)
         _all_order = ["D60", "D30", "D14", "D7", "D1"]
         cumulative_sold = 0
         for iv in _all_order:
@@ -483,25 +677,22 @@ with col_out:
         price_base  = int(v_sel.get("price", 0))
         zone_prices = v_sel.get("zone_prices", {})
 
-        # 핵심 지표
         m1, m2, m3 = st.columns(3)
-        m1.metric("이 시점 잔여 좌석", f"{remaining_before:,}석")
-        m2.metric("이 구간 예상 판매", f"{sold_this:,}석")
-        m3.metric("기준가", f"{price_base:,}원")
+        m1.metric("Remaining Seats",          f"{remaining_before:,}")
+        m2.metric("Expected Sales (interval)", f"{sold_this:,}")
+        m3.metric("Base Price",                f"{price_base:,}원")
 
         st.divider()
 
-        # 좌석별 티켓 가격 표
         if zone_prices:
-            st.markdown("**좌석 구역별 티켓 가격**")
-            zone_rows = [{"구역": z, "티켓 가격 (원)": f"{p:,}"} for z, p in zone_prices.items()]
-            df_zone = pd.DataFrame(zone_rows)
-            st.dataframe(df_zone, use_container_width=True, hide_index=True)
+            st.markdown('<div class="section-label">Zone Ticket Prices</div>', unsafe_allow_html=True)
+            zone_rows = [{"Zone": z, "Ticket Price": f"{p:,}원"} for z, p in zone_prices.items()]
+            st.dataframe(pd.DataFrame(zone_rows), use_container_width=True, hide_index=True)
         else:
-            st.info("좌석 배치도 이미지를 업로드하면 구역별 가격이 표시됩니다.")
+            st.info("Upload a seat map image to see zone-level pricing.")
 
         st.divider()
-        st.markdown("**전 구간 요약**")
+        st.markdown('<div class="section-label">Full Interval Summary</div>', unsafe_allow_html=True)
         _sum_rows = []
         _rem = total_seats
         for iv in _all_order:
@@ -509,88 +700,88 @@ with col_out:
                 continue
             qty = int(lp[iv].get("quantity", 0))
             _sum_rows.append({
-                "D-day": iv,
-                "잔여 좌석 (판매 전)": f"{_rem:,}",
-                "예상 판매": f"{qty:,}",
-                "기준가 (원)": f"{int(lp[iv]['price']):,}",
+                "D-day":               iv,
+                "Remaining (pre-sale)": f"{_rem:,}",
+                "Expected Sales":       f"{qty:,}",
+                "Base Price":       f"{int(lp[iv]['price']):,}원",
             })
             _rem = max(0, _rem - qty)
         st.dataframe(pd.DataFrame(_sum_rows), use_container_width=True, hide_index=True)
 
-    # ── Tab 5: Claude AI 해설 ─────────────────────────────────────────────────
+    # ── Tab 6: AI Insight ─────────────────────────────────────────────────────
     with tab_insight:
-        st.subheader("🤖 AI 전략 해설 (Claude)")
+        st.markdown('<div class="section-label">AI Strategy Insight — Claude</div>', unsafe_allow_html=True)
         if ins:
             st.markdown(
                 f'<div class="insight-box">{ins.replace(chr(10), "<br>")}</div>',
                 unsafe_allow_html=True,
             )
         else:
-            st.info("Claude insight가 생성되지 않았습니다. (API 키 확인 필요)")
+            st.info("No Claude insight generated. Check your API key configuration.")
 
-    # ── Tab 6: 모델 수식 ──────────────────────────────────────────────────────
+    # ── Tab 7: Model Equations ────────────────────────────────────────────────
     with tab_model:
-        st.subheader("📐 모델 수식 요약")
-        st.caption("본 에이전트에서 사용하는 핵심 수식입니다.")
+        st.markdown('<div class="section-label">Model Equations</div>', unsafe_allow_html=True)
+        st.caption("Core mathematical formulas used in this pricing agent.")
 
-        st.markdown("#### 1. 헤도닉 좌석 가중치 (Hedonic Seat Weight)")
+        st.markdown("#### 1. Hedonic Seat Weight")
         st.latex(r"W_g = \beta_{Z1} \cdot Z1_g + \beta_{Z2} \cdot Z2_g + \beta_{Z3} \cdot Z3_g")
         st.markdown("""
-- $Z1$: 무대 근접도 (0=최원거리, 1=최근접)
-- $Z2$: 정면성 (0=측면, 1=정면)
-- $Z3$: 런웨이 인접 여부 (0 or 1)
-- $\\beta$ 계수는 티켓베이 구역별 재판매가 OLS 회귀로 추정
+- $Z1$: Stage proximity (0 = farthest, 1 = closest)
+- $Z2$: Frontality (0 = side, 1 = front-facing)
+- $Z3$: Runway adjacency (0 or 1)
+- $\\beta$ coefficients estimated via OLS regression on Ticketbay zone resale prices
         """)
 
         st.divider()
-        st.markdown("#### 2. WTP 평균 조정 (Temporal D-factor)")
+        st.markdown("#### 2. WTP Mean Adjustment (Temporal D-factor)")
         st.latex(r"\mu_{adj,t} = \mu_{final} \times \underbrace{\text{clamp}\!\left(1 + \frac{\beta_1}{\mu_{base}} \cdot (14 - D_t),\ 0.5,\ 1.5\right)}_{d_t}")
         st.markdown("""
-- $D_t$: 공연까지 남은 일수 (D60, D30, D14, D7, D1)
-- $d_t > 1$: 공연이 가까울수록 팬들의 WTP 상승
+- $D_t$: Days remaining until concert (D60, D30, D14, D7, D1)
+- $d_t > 1$: Fan WTP increases as concert day approaches
 - $\\mu_{final} = \\mu_{base} \\times f(\\text{popularity score})$
         """)
 
         st.divider()
-        st.markdown("#### 3. WTP 수요 함수 (Demand Model, B-method)")
+        st.markdown("#### 3. Demand Function (B-method, WTP Normal)")
         st.latex(r"Q_t(P_t) = N \times \left(1 - \Phi\!\left(\frac{P_t - \mu_{adj,t}}{\sigma}\right)\right)")
         st.markdown("""
-- $\\Phi$: 표준 정규 CDF
-- $N$: 총 좌석 수
-- 가격 $P_t$가 높아질수록 수요 감소 — 정규분포 꼬리 면적
+- $\\Phi$: Standard normal CDF
+- $N$: Total seat count
+- Higher price $P_t$ → lower demand — right-tail area of normal distribution
         """)
 
         st.divider()
-        st.markdown("#### 4. LP 최적화 (Price Optimization)")
+        st.markdown("#### 4. LP Price Optimization")
         st.latex(r"\max_{P_t} \sum_{t \in \mathcal{T}} P_t \cdot Q_t(P_t)")
         st.latex(r"\text{s.t.} \quad P_{floor} \leq P_t \leq P_{ceiling}, \quad \sum_{k} x_{t,k} = 1 \quad (x_{t,k} \in \{0,1\})")
         st.markdown("""
-- 비선형 목적함수 → 가격 후보 20개 이산화 후 Binary LP로 선형화
+- Nonlinear objective → linearized via 20 price candidate discretization + Binary LP
 - Solver: PuLP CBC
-- $P_{floor}, P_{ceiling}$: WTP 분포에서 자동 도출 ($\\mu_{final} \\pm c \\cdot \\sigma$)
+- $P_{floor}, P_{ceiling}$: Derived from WTP distribution ($\\mu_{final} \\pm c \\cdot \\sigma$)
         """)
 
         st.divider()
-        st.markdown("#### 5. 구역별 가격 (Zone Pricing)")
+        st.markdown("#### 5. Zone Pricing")
         st.latex(r"P_{t,g} = P_t \times \frac{W_g}{\bar{W}}, \quad \bar{W} = \frac{1}{G}\sum_g W_g")
-        st.markdown("기준가 $P_t$에 헤도닉 가중치 비율을 곱해 구역별 차등 가격 산출")
+        st.markdown("Zone price = base price scaled by the hedonic weight ratio for that zone.")
 
         st.divider()
-        st.markdown("#### 6. 가격 민감도 시나리오 (Sensitivity)")
+        st.markdown("#### 6. Sensitivity Scenarios")
         st.latex(r"\text{churn} = \min\!\left(0.99,\ r \cdot \frac{P - P_{floor}}{0.1 \cdot P_{floor}}\right)")
         st.latex(r"R_{net} = P \cdot Q \cdot (1-\text{churn}) - \underbrace{Q \cdot \text{churn} \cdot \mu_{final} \cdot \alpha}_{\text{brand penalty}}")
         st.markdown("""
-| 시나리오 | $r$ (10% 인상당 이탈) | $\\alpha$ (브랜드 패널티) |
-|---------|----------------------|------------------------|
-| S1 (현재 모델) | 0% | 0% |
+| Scenario | $r$ (churn per 10% price hike) | $\\alpha$ (brand penalty) |
+|----------|-------------------------------|--------------------------|
+| S1 (Current Model) | 0% | 0% |
 | S2 | 3% | 0% |
 | S3 | 6% | 0% |
 | S4 | 10% | 5% |
 | S5 | 15% | 12% |
         """)
 
-    # ── 오류 ──────────────────────────────────────────────────────────────────
+    # ── Errors ────────────────────────────────────────────────────────────────
     if res.get("errors"):
-        with st.expander("⚠️ 실행 중 발생한 경고"):
+        with st.expander("Warnings during execution"):
             for e in res["errors"]:
                 st.warning(e)
