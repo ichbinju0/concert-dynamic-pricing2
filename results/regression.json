@@ -1,0 +1,14 @@
+{
+  "beta_coefficients": {
+    "beta_d_day": -12032.39377366426,
+    "beta_W_g": -4.795744661379955e-28,
+    "beta_popularity": 0.0,
+    "intercept": 383965.0219364144
+  },
+  "mu_base": 368574.75083056476,
+  "sigma": 144440.78863769787,
+  "beta1_over_mu": -0.032645735353682974,
+  "logo_mape": 0.47507740468651244,
+  "mu_final": 442289.7009966777,
+  "popularity_factor": 1.2
+}
