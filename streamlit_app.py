@@ -404,11 +404,13 @@ with col_out:
         fig_sens.add_vline(
             x=lp_d14 / 1000, line_dash="dash", line_color="#7f8c8d",
             annotation_text=f"LP {lp_d14/1000:.0f}k",
+            annotation_position="top right",
         )
 
         fig_sens.add_vline(
             x=mu / 1000, line_dash="dot", line_color="#bdc3c7",
             annotation_text=f"mu_final {mu/1000:.0f}k",
+            annotation_position="bottom right",
         )
 
 
