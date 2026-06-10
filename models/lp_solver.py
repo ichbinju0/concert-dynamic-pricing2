@@ -5,7 +5,7 @@ from pulp import LpProblem, LpMaximize, LpVariable, lpSum, PULP_CBC_CMD
 from tools.file_manager import save_json
 
 _INTERVALS          = [("D60", 60), ("D30", 30), ("D14", 14), ("D7", 7), ("D1", 1)]
-_N_PRICE_CANDIDATES = 20
+_N_PRICE_CANDIDATES = 30
 
 
 def compute_d_factor(beta1_over_mu: float, d_day: int) -> float:
