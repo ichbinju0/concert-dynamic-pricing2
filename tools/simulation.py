@@ -50,14 +50,15 @@ def find_optimal_static_price(
     active   = _active_intervals(sale_start_d_day)
     best_price, best_rev = float(floor_price), 0.0
     for p in np.linspace(floor_price, ceiling_price, 50):
-        total_rev = sum(
-            p * _demand(p, mu * _d_factor(b1m, _D_DAYS[iv]), sigma, total_seats)
-            for iv in active
-        )
+        remaining = total_seats
+        total_rev = 0.0
+        for iv in active:
+            qt = min(_demand(p, mu * _d_factor(b1m, _D_DAYS[iv]), sigma, total_seats), float(remaining))
+            total_rev += p * qt
+            remaining = max(0, remaining - int(qt))
         if total_rev > best_rev:
             best_rev, best_price = total_rev, float(p)
     return best_price
-
 
 def simulate_strategy2(static_price: float, wtp_model: dict, total_seats: int,
                         sale_start_d_day: int = 60) -> dict:
