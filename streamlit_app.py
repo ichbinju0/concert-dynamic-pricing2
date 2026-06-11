@@ -55,7 +55,6 @@ st.markdown("""
 /* ── Hide UI chrome ── */
 #MainMenu                  { visibility: hidden; }
 footer                     { visibility: hidden; }
-[data-testid="stToolbar"]  { visibility: hidden; }
 [data-testid="collapsedControl"] {
     display: block !important;
     visibility: visible !important;
