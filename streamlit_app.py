@@ -56,6 +56,12 @@ st.markdown("""
 #MainMenu                  { visibility: hidden; }
 footer                     { visibility: hidden; }
 [data-testid="stToolbar"]  { visibility: hidden; }
+[data-testid="collapsedControl"] {
+    display: block !important;
+    visibility: visible !important;
+    background: #1a1230 !important;
+    color: #a855f7 !important;
+}
 [data-testid="stHeader"]   { background: #08080d !important; border-bottom: none !important; }
 
 /* ── Global reset ── */
